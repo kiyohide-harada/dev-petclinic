@@ -1,0 +1,104 @@
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'login')}" lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Form</title>
+ 
+</head>
+  <body>
+  <script type="text/javascript">
+    AWS.config.region = 'ap-northeast-1';
+    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+        IdentityPoolId: 'IdentityID'
+    });
+    // Initialize the Amazon Cognito credentials provider
+    AWSCognito.config.region = 'ap-northeast-1'; // Region
+    AWSCognito.config.credentials = new AWS.CognitoIdentityCredentials({
+        IdentityPoolId: 'IdentityID'
+    });
+    var data = { UserPoolId: 'UserPoolId',
+        ClientId: 'ClientId',
+        Paranoia : 7
+    };
+
+    var userPool;
+    var cognitoUser;
+</script>
+
+
+    <h2>Login</h2>
+
+  <hgroup class="heading">
+    <h1 class="major">Login Form </h1>
+  </hgroup>
+  
+  <!-- form starts here -->
+  <form class="sign-up">
+    <h1 class="sign-up-title">Sign up in seconds</h1>
+    <input type="text" class="sign-up-input" id="name" placeholder="What's your username?" autofocus>
+    <input type="password" class="sign-up-input" id="password" placeholder="Choose a password">
+    <button type="submit" value="Log in" class="sign-up-button" id="login-button">Login</button>
+  </form>
+
+	<script type="text/javascript">
+		$("#login-button")
+				.click(
+						function(event) {
+							event.preventDefault();
+							var authenticationData = {
+								Username : $('#name').val(),
+								Password : $('#password').val()
+							};
+							
+							var authenticationDetails = new AWSCognito.CognitoIdentityServiceProvider.AuthenticationDetails(
+									authenticationData);
+							
+							userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(
+									data);
+							var userData = {
+								Username : $('#name').val(),
+								Pool : userPool
+							};
+							
+							cognitoUser = new AWSCognito.CognitoIdentityServiceProvider.CognitoUser(
+									userData);
+							
+							cognitoUser.authenticateUser(authenticationDetails,
+									{
+										onSuccess : function(authresult) {
+											console.log('access token + ' + authresult.getIdToken().getJwtToken());
+
+											var url = "mypage";
+
+											$('form').fadeOut(700, function() {
+												$(location).attr("href", url);
+											});
+											$('.wrapper').addClass(
+													'form-success');
+
+										},
+										onFailure : function(err) {
+											alert(err.message);
+										},
+								        mfaRequired: function(codeDeliveryDetails) {
+								            // MFA is required to complete user authentication.
+								            // Get the code from user and call
+								            alert("mfa");
+								            cognitoUser.sendMFACode(mfaCode, this)
+								        },
+								        newPasswordRequired: function(userAttributes, requiredAttributes) {
+								            // User was signed up by an admin and must provide new
+								            // password and required attributes, if any, to complete
+								            // authentication.
+
+								            // the api doesn't accept this field back
+								            //delete userAttributes.email_verified;
+								            //console.log('access token + ' + authresult.getIdToken().getJwtToken());
+								            // Get these details and call
+								            cognitoUser.completeNewPasswordChallenge($('#password').val(), {}, this);
+								            //cognitoUser.completeNewPasswordChallenge(newPassword, userAttributes, this);
+								        }
+									});
+						});
+	</script>
+</body>
+</html>
