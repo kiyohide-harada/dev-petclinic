@@ -19,8 +19,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.samples.petclinic.PetClinicApplication;
+import org.springframework.samples.petclinic.visit.VisitRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +30,8 @@ import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.ModelAndView;
+
+import antlr.collections.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -55,10 +59,13 @@ class OwnerController{
 	
 	private static final String VIEWS_OWNER_CREATE_OR_UPDATE_FORM = "owners/createOrUpdateOwnerForm";
     private final OwnerRepository owners;
+    private final PetRepository pets;
+    private final VisitRepository visits;
     
-    
-    public OwnerController(OwnerRepository clinicService) {
+    public OwnerController(OwnerRepository clinicService,PetRepository pets,VisitRepository visits) {
         this.owners = clinicService;
+        this.pets = pets;
+        this.visits = visits;
     }
 
    
@@ -155,14 +162,18 @@ class OwnerController{
         return "login";
     }
 
-    @PostMapping("/loginh")
-    public String loginh(@Valid Owner owner, BindingResult result, Map<String, Object> model,Model model2) {
+    @PostMapping("/12loginh2")
+    public String loginh2(@Valid Owner owner, BindingResult result, Map<String, Object> model,Model model2) {
     	 if (owner.getPassword()!=null) {
     		 String s=toEncryptedHashValue("SHA-512",owner.getPassword());
              owner.setPassword(s);
         	 Owner results1 = this.owners.findByEmailAndPass(owner.getEmail(),owner.getPassword());
         	 if (results1!=null) {
-        		 session.setAttribute("loginName",results1.getLastName()+" Welcome");
+        		session.setAttribute("loginName",results1.getLastName()+" Welcome");
+        		session.setAttribute("OwnerId",results1.getId());
+        	
+        		
+        		
          		return "welcome";
         	 }
     	 }
@@ -180,11 +191,9 @@ class OwnerController{
         		result.rejectValue("password", "notFound", "not found");
         		return "login";
         	}
-    		
     		return "login";
- 
     }
-
+ 
     @PostMapping("/logout")
     public String logout(@Valid Owner owner, BindingResult result, Map<String, Object> model,Model model2) {
     	    session.invalidate();
